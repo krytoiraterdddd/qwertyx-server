@@ -1,1 +1,1 @@
-
+{"name":"qwertyx-hwid","type":"module","scripts":{"start":"node server.js"},"dependencies":{"express":"^4.19.0","jsonwebtoken":"^9.0.0","pg":"^8.11.0"}}
