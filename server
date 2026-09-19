@@ -1,0 +1,21 @@
+import express from "express";
+import jwt from "jsonwebtoken";
+const app=express(); app.use(express.json());
+const SECRET=process.env.SECRET||"change-me-qwertyx";
+const keys=new Map();
+app.post("/generate",(req,res)=>{
+  const {days,hwid} = req.body; // 0.0416=1ч,3,7,14,30,60,3650=навсегда
+  const expiry=Date.now()+days*86400000;
+  const key=jwt.sign({hwid,expiry},SECRET);
+  keys.set(key,{expiry,hwid}); res.json({key,expiry});
+});
+app.post("/validate",(req,res)=>{
+  const {key,hwid}=req.body;
+  try{const d=jwt.verify(key,SECRET);
+  if(d.hwid!==hwid) return res.json({ok:false,reason:"hwid"});
+  if(Date.now()>d.expiry) return res.json({ok:false,reason:"expired"});
+  res.json({ok:true,leftMs:d.expiry-Date.now()});
+  }catch{res.json({ok:false,reason:"bad"})}
+});
+app.get("/",(_,res)=>res.send("qwertyx HWID ok"));
+app.listen(process.env.PORT||3000,()=>console.log("qwertyx server 3000"));
