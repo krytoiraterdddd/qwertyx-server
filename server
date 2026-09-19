@@ -1,1 +1,8 @@
 
+import express from "express";import jwt from "jsonwebtoken";import pg from "pg";
+const app=express();app.use(express.json());
+const SECRET=process.env.SECRET||"qwertyx_very_secret_123";
+const pool=new pg.Pool({connectionString:process.env.DATABASE_URL,ssl:{rejectUnauthorized:false}});
+app.post("/generate",async(req,res)=>{const {days,hwid}=req.body;const expiry=Date.now()+days*86400000;const key=jwt.sign({hwid,expiry},SECRET);await pool.query("INSERT INTO keys VALUES($1,$2,$3,$4)",[key,hwid,expiry,days]);res.json({key,expiry})});
+app.post("/validate",async(req,res)=>{const {key,hwid}=req.body;try{const d=jwt.verify(key,SECRET);const r=await pool.query("SELECT expiry FROM keys WHERE key=$1 AND hwid=$2",[key,hwid]);if(!r.rows[0]||Date.now()>r.rows[0].expiry) return res.json({ok:false});res.json({ok:true,leftMs:r.rows[0].expiry-Date.now()})}catch{res.json({ok:false})}});
+app.get("/",(_,res)=>res.send("qwertyx ok"));app.listen(process.env.PORT||3000,()=>console.log("qwertyx 3000"));
